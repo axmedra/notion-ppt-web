@@ -47,6 +47,38 @@ const replaceTextInShape = (xml: string, shapeName: string, newText: string): st
   return before + newTxBody + after;
 };
 
+const removeShapePlaceholder = (xml: string, shapeName: string): string => {
+  const nameAttr = `name="${shapeName}"`;
+  const nameIndex = xml.indexOf(nameAttr);
+
+  if (nameIndex === -1) {
+    return xml;
+  }
+
+  // Найти начало <p:sp> или <p:sp ...>
+  let spStart = xml.lastIndexOf("<p:sp>", nameIndex);
+  if (spStart === -1) {
+    spStart = xml.lastIndexOf("<p:sp ", nameIndex);
+  }
+  if (spStart === -1) {
+    return xml;
+  }
+
+  // Найти конец </p:sp>
+  const spEnd = xml.indexOf("</p:sp>", nameIndex);
+  if (spEnd === -1) {
+    return xml;
+  }
+
+  const fullSpEnd = spEnd + "</p:sp>".length;
+
+  const before = xml.substring(0, spStart);
+  const after = xml.substring(fullSpEnd);
+
+  console.log(`     Shape "${shapeName}" — удалён (пустой плейсхолдер)`);
+  return before + after;
+};
+
 const replaceImagePlaceholder = (
   xml: string,
   shapeName: string,
@@ -160,6 +192,11 @@ const processOneSlide = async (
   if (shapes.title && input.title.trim()) {
     slideXml = replaceTextInShape(slideXml, shapes.title, input.title.trim());
   }
+
+  // Обработка User Task → Верхний колонтитул
+  if (shapes.header && input.userTask?.trim()) {
+    slideXml = replaceTextInShape(slideXml, shapes.header, input.userTask.trim());
+  }
   
   // Обработка нескольких названий банков
   const bankNameShapes = [shapes.bankName1, shapes.bankName2, shapes.bankName3];
@@ -179,7 +216,9 @@ const processOneSlide = async (
   }
 
   const imageShapeNames = [shapes.image1, shapes.image2, shapes.image3];
+  const usedImageIndices = new Set<number>();
 
+  // Добавляем картинки в плейсхолдеры
   for (let i = 0; i < input.images.length && i < 3; i++) {
     const image = input.images[i];
     const shapeName = imageShapeNames[i];
@@ -195,6 +234,15 @@ const processOneSlide = async (
     const relId = getNextRelId(relsXml);
     relsXml = addRelationship(relsXml, relId, `../media/${mediaFilename}`);
     slideXml = replaceImagePlaceholder(slideXml, shapeName, relId);
+    usedImageIndices.add(i);
+  }
+
+  // Удаляем пустые плейсхолдеры картинок
+  for (let i = 0; i < imageShapeNames.length; i++) {
+    const shapeName = imageShapeNames[i];
+    if (shapeName && !usedImageIndices.has(i)) {
+      slideXml = removeShapePlaceholder(slideXml, shapeName);
+    }
   }
 
   zip.file(`ppt/slides/slide${outputSlideNum}.xml`, slideXml);

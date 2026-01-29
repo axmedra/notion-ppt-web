@@ -75,7 +75,18 @@ export const getDatabasePages = async (
         }
       }
 
-      return { id: page.id, title, slideType, bankNames };
+      // Парсим User Task
+      const userTaskProp = page.properties["User Task"];
+      let userTask = "";
+      if (userTaskProp?.type === "rich_text") {
+        userTask = userTaskProp.rich_text.map((t) => t.plain_text).join("");
+      } else if (userTaskProp?.type === "title") {
+        userTask = userTaskProp.title.map((t) => t.plain_text).join("");
+      } else if (userTaskProp?.type === "select" && userTaskProp.select?.name) {
+        userTask = userTaskProp.select.name;
+      }
+
+      return { id: page.id, title, slideType, userTask, bankNames };
     });
 };
 
@@ -215,6 +226,21 @@ export const pageToSlideInput = async (
     }
   }
 
+  // Парсим User Task
+  const userTaskKey = Object.keys(page.properties).find(
+    (k) => k.toLowerCase() === "user task"
+  );
+  const userTaskProp = userTaskKey ? page.properties[userTaskKey] : undefined;
+  let userTask = "";
+  
+  if (userTaskProp?.type === "rich_text") {
+    userTask = userTaskProp.rich_text.map((t) => t.plain_text).join("");
+  } else if (userTaskProp?.type === "title") {
+    userTask = userTaskProp.title.map((t) => t.plain_text).join("");
+  } else if (userTaskProp?.type === "select" && userTaskProp.select?.name) {
+    userTask = userTaskProp.select.name;
+  }
+
   const imagesFromBlocks = blocks
     .map((b) => getImageUrlFromBlock(b))
     .filter(Boolean) as { url: string; filenameHint?: string }[];
@@ -229,6 +255,7 @@ export const pageToSlideInput = async (
     id: page.id,
     slideType,
     title,
+    userTask,
     bankNames,
     textBlocks: blocksToTextBlocks(blocks),
     tables,

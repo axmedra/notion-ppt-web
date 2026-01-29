@@ -5,6 +5,7 @@ export const defaultTemplateBindings: Record<string, TemplateBinding> = {
     templateSlideNumber: 1,
     shapes: {
       title: "Title",
+      header: "Верхний колонтитул",
       body: "Body",
     },
   },
@@ -12,6 +13,7 @@ export const defaultTemplateBindings: Record<string, TemplateBinding> = {
     templateSlideNumber: 1,
     shapes: {
       title: "Title",
+      header: "Верхний колонтитул",
       table: "Table",
     },
   },
@@ -19,7 +21,10 @@ export const defaultTemplateBindings: Record<string, TemplateBinding> = {
     templateSlideNumber: 1,
     shapes: {
       title: "Title",
+      header: "Верхний колонтитул",
       image1: "Image 1",
+      image2: "Image 2",
+      image3: "Image 3",
       body: "Body",
     },
   },
@@ -27,6 +32,7 @@ export const defaultTemplateBindings: Record<string, TemplateBinding> = {
     templateSlideNumber: 1,
     shapes: {
       title: "Title",
+      header: "Верхний колонтитул",
       body: "Body",
       bankName1: "BankName1",
       bankName2: "BankName2",

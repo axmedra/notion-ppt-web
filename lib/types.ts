@@ -23,6 +23,7 @@ export type SlideInput = {
   id: string;
   slideType: SlideTypeName;
   title: string;
+  userTask: string; // User Task → Верхний колонтитул
   bankNames: string[]; // Массив названий банков (до 3)
   textBlocks: SlideTextBlock[];
   tables: SlideTable[];
@@ -33,6 +34,7 @@ export type TemplateBinding = {
   templateSlideNumber: number;
   shapes: {
     title?: string;
+    header?: string; // Верхний колонтитул (User Task)
     bankName1?: string;
     bankName2?: string;
     bankName3?: string;
@@ -54,5 +56,6 @@ export type NotionPage = {
   id: string;
   title: string;
   slideType: string;
+  userTask: string;
   bankNames: string[];
 };
