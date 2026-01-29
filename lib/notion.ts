@@ -135,6 +135,46 @@ const getImageUrlFromBlock = (
   return null;
 };
 
+// Рекурсивно извлекает картинки из блоков, включая колонки
+const extractImagesFromBlocks = async (
+  notion: Client,
+  blocks: BlockObjectResponse[]
+): Promise<{ url: string; filenameHint?: string }[]> => {
+  const images: { url: string; filenameHint?: string }[] = [];
+
+  for (const block of blocks) {
+    // Прямая картинка
+    const imageData = getImageUrlFromBlock(block);
+    if (imageData) {
+      images.push(imageData);
+      continue;
+    }
+
+    // Обработка column_list (контейнер колонок)
+    if (block.type === "column_list" && block.has_children) {
+      const columnBlocks = await getPageBlocks(notion, block.id);
+      for (const columnBlock of columnBlocks) {
+        // Каждая колонка - это column блок
+        if (columnBlock.type === "column" && columnBlock.has_children) {
+          const columnChildren = await getPageBlocks(notion, columnBlock.id);
+          // Извлекаем картинки из содержимого колонки
+          const columnImages = await extractImagesFromBlocks(notion, columnChildren);
+          images.push(...columnImages);
+        }
+      }
+    }
+
+    // Обработка toggle, callout и других блоков с детьми
+    if (block.has_children && block.type !== "column_list" && block.type !== "column") {
+      const childBlocks = await getPageBlocks(notion, block.id);
+      const childImages = await extractImagesFromBlocks(notion, childBlocks);
+      images.push(...childImages);
+    }
+  }
+
+  return images;
+};
+
 const blocksToTextBlocks = (blocks: BlockObjectResponse[]): SlideTextBlock[] => {
   const textBlocks: SlideTextBlock[] = [];
 
@@ -241,9 +281,8 @@ export const pageToSlideInput = async (
     userTask = userTaskProp.select.name;
   }
 
-  const imagesFromBlocks = blocks
-    .map((b) => getImageUrlFromBlock(b))
-    .filter(Boolean) as { url: string; filenameHint?: string }[];
+  // Извлекаем картинки рекурсивно (включая из колонок)
+  const imagesFromBlocks = await extractImagesFromBlocks(notion, blocks);
 
   const tables: SlideTable[] = [];
   for (const block of blocks) {

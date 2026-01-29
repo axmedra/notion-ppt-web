@@ -38,6 +38,9 @@ export type TemplateBinding = {
     bankName1?: string;
     bankName2?: string;
     bankName3?: string;
+    imageCaption1?: string; // Под картинкой 1
+    imageCaption2?: string; // Под картинкой 2
+    imageCaption3?: string; // Под картинкой 3
     body?: string;
     table?: string;
     image1?: string;

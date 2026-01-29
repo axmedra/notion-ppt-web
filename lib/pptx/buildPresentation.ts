@@ -237,8 +237,10 @@ const processOneSlide = async (
     usedImageIndices.add(i);
   }
 
-  // Удаляем пустые плейсхолдеры картинок и соответствующие названия банков
-  const bankNameShapesToRemove = [null, shapes.bankName2, shapes.bankName3]; // индекс 0 не удаляем
+  // Удаляем пустые плейсхолдеры картинок и соответствующие элементы
+  const bankNameShapesToRemove = [null, shapes.bankName2, shapes.bankName3]; // BankName удаляем только для 2 и 3
+  const captionShapesToRemove = [null, shapes.imageCaption2, shapes.imageCaption3]; // Под картинкой удаляем только для 2 и 3
+  
   for (let i = 0; i < imageShapeNames.length; i++) {
     const shapeName = imageShapeNames[i];
     if (shapeName && !usedImageIndices.has(i)) {
@@ -248,6 +250,12 @@ const processOneSlide = async (
       const bankNameShape = bankNameShapesToRemove[i];
       if (bankNameShape) {
         slideXml = removeShapePlaceholder(slideXml, bankNameShape);
+      }
+      
+      // Удаляем соответствующую подпись (Под картинкой 2 для Image 2, Под картинкой 3 для Image 3)
+      const captionShape = captionShapesToRemove[i];
+      if (captionShape) {
+        slideXml = removeShapePlaceholder(slideXml, captionShape);
       }
     }
   }
