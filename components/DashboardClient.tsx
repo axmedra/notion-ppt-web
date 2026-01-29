@@ -80,19 +80,12 @@ export const DashboardClient = () => {
     }
   };
 
-  const MAX_FILE_SIZE = 4 * 1024 * 1024; // 4 MB лимит для Vercel
-
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
     
     if (!file.name.endsWith(".pptx")) {
       setError("Пожалуйста, выберите файл .pptx");
-      return;
-    }
-    
-    if (file.size > MAX_FILE_SIZE) {
-      setError(`Файл слишком большой (${(file.size / 1024 / 1024).toFixed(1)} MB). Максимум 4 MB.`);
       return;
     }
     
@@ -166,11 +159,6 @@ export const DashboardClient = () => {
     
     if (!file.name.endsWith(".pptx")) {
       setError("Пожалуйста, выберите файл .pptx");
-      return;
-    }
-    
-    if (file.size > MAX_FILE_SIZE) {
-      setError(`Файл слишком большой (${(file.size / 1024 / 1024).toFixed(1)} MB). Максимум 4 MB.`);
       return;
     }
     

@@ -5,18 +5,9 @@ import { buildPresentation } from "@/lib/pptx/buildPresentation";
 import { defaultTemplateBindings } from "@/lib/templateBindings";
 import type { SlideInput } from "@/lib/types";
 
-// Vercel serverless config
+// Vercel Pro serverless config
 export const maxDuration = 60;
 export const dynamic = "force-dynamic";
-
-// Увеличим лимит body до 10MB (работает на Pro плане)
-export const config = {
-  api: {
-    bodyParser: {
-      sizeLimit: "10mb",
-    },
-  },
-};
 
 export const POST = async (request: Request) => {
   const session = await auth();
