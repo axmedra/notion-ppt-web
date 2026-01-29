@@ -137,8 +137,8 @@ export const DashboardClient = () => {
         throw new Error(errorMessage);
       }
 
-      const blob = await response.blob();
-      const url = URL.createObjectURL(blob);
+      const pptxBlob = await response.blob();
+      const url = URL.createObjectURL(pptxBlob);
       const a = document.createElement("a");
       a.href = url;
       a.download = "presentation.pptx";
