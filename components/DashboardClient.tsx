@@ -101,26 +101,38 @@ export const DashboardClient = () => {
     setError(null);
 
     try {
-      const formData = new FormData();
-      formData.append("template", templateFile);
-      formData.append("pageIds", JSON.stringify(Array.from(selectedPageIds)));
+      // 1. Загружаем шаблон в Vercel Blob (обходит лимит 4.5MB)
+      console.log("Загрузка шаблона...");
+      const uploadResponse = await fetch(`/api/upload?filename=${encodeURIComponent(templateFile.name)}`, {
+        method: "POST",
+        body: templateFile,
+      });
 
+      if (!uploadResponse.ok) {
+        const data = await uploadResponse.json().catch(() => ({}));
+        throw new Error(data.error || "Ошибка загрузки шаблона");
+      }
+
+      const { url: templateUrl } = await uploadResponse.json();
+      console.log("Шаблон загружен:", templateUrl);
+
+      // 2. Генерируем презентацию
       const response = await fetch("/api/export", {
         method: "POST",
-        body: formData,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          templateUrl,
+          pageIds: Array.from(selectedPageIds),
+        }),
       });
 
       if (!response.ok) {
-        // Пробуем получить JSON ошибку, иначе используем статус
         let errorMessage = "Ошибка экспорта";
         try {
           const data = await response.json();
           errorMessage = data.error || errorMessage;
         } catch {
-          // Не JSON ответ - скорее всего ошибка сервера
-          if (response.status === 413) {
-            errorMessage = "Файл слишком большой. Попробуйте уменьшить шаблон или выбрать меньше страниц.";
-          } else if (response.status === 504) {
+          if (response.status === 504) {
             errorMessage = "Таймаут сервера. Попробуйте выбрать меньше страниц.";
           } else {
             errorMessage = `Ошибка сервера (${response.status})`;
