@@ -143,35 +143,51 @@ const extractImagesFromBlocks = async (
   const images: { url: string; filenameHint?: string }[] = [];
 
   for (const block of blocks) {
+    console.log(`  Блок: type=${block.type}, has_children=${block.has_children}`);
+    
     // Прямая картинка
     const imageData = getImageUrlFromBlock(block);
     if (imageData) {
+      console.log(`    → Найдена картинка: ${imageData.url.slice(0, 50)}...`);
       images.push(imageData);
       continue;
     }
 
     // Обработка column_list (контейнер колонок)
-    if (block.type === "column_list" && block.has_children) {
-      const columnBlocks = await getPageBlocks(notion, block.id);
-      for (const columnBlock of columnBlocks) {
-        // Каждая колонка - это column блок
-        if (columnBlock.type === "column" && columnBlock.has_children) {
-          const columnChildren = await getPageBlocks(notion, columnBlock.id);
-          // Извлекаем картинки из содержимого колонки
-          const columnImages = await extractImagesFromBlocks(notion, columnChildren);
-          images.push(...columnImages);
+    if (block.type === "column_list") {
+      console.log(`    → Обрабатываю column_list...`);
+      try {
+        const columnBlocks = await getPageBlocks(notion, block.id);
+        console.log(`    → Найдено колонок: ${columnBlocks.length}`);
+        for (const columnBlock of columnBlocks) {
+          // Каждая колонка - это column блок
+          if (columnBlock.type === "column") {
+            console.log(`      → Обрабатываю column...`);
+            const columnChildren = await getPageBlocks(notion, columnBlock.id);
+            console.log(`      → Элементов в колонке: ${columnChildren.length}`);
+            // Извлекаем картинки из содержимого колонки
+            const columnImages = await extractImagesFromBlocks(notion, columnChildren);
+            images.push(...columnImages);
+          }
         }
+      } catch (err) {
+        console.error(`    ✗ Ошибка при обработке column_list:`, err);
       }
     }
 
-    // Обработка toggle, callout и других блоков с детьми
-    if (block.has_children && block.type !== "column_list" && block.type !== "column") {
-      const childBlocks = await getPageBlocks(notion, block.id);
-      const childImages = await extractImagesFromBlocks(notion, childBlocks);
-      images.push(...childImages);
+    // Обработка toggle, callout и других блоков с детьми (кроме колонок)
+    if (block.has_children && block.type !== "column_list" && block.type !== "column" && block.type !== "image") {
+      try {
+        const childBlocks = await getPageBlocks(notion, block.id);
+        const childImages = await extractImagesFromBlocks(notion, childBlocks);
+        images.push(...childImages);
+      } catch (err) {
+        console.error(`    ✗ Ошибка при обработке children:`, err);
+      }
     }
   }
 
+  console.log(`  Итого картинок найдено: ${images.length}`);
   return images;
 };
 
