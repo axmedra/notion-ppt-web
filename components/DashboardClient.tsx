@@ -80,14 +80,24 @@ export const DashboardClient = () => {
     }
   };
 
+  const MAX_FILE_SIZE = 4 * 1024 * 1024; // 4 MB лимит для Vercel
+
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
-    if (file && file.name.endsWith(".pptx")) {
-      setTemplateFile(file);
-      setError(null);
-    } else {
+    if (!file) return;
+    
+    if (!file.name.endsWith(".pptx")) {
       setError("Пожалуйста, выберите файл .pptx");
+      return;
     }
+    
+    if (file.size > MAX_FILE_SIZE) {
+      setError(`Файл слишком большой (${(file.size / 1024 / 1024).toFixed(1)} MB). Максимум 4 MB.`);
+      return;
+    }
+    
+    setTemplateFile(file);
+    setError(null);
   };
 
   const handleExport = async () => {
@@ -108,8 +118,22 @@ export const DashboardClient = () => {
       });
 
       if (!response.ok) {
-        const data = await response.json();
-        throw new Error(data.error || "Failed to export");
+        // Пробуем получить JSON ошибку, иначе используем статус
+        let errorMessage = "Ошибка экспорта";
+        try {
+          const data = await response.json();
+          errorMessage = data.error || errorMessage;
+        } catch {
+          // Не JSON ответ - скорее всего ошибка сервера
+          if (response.status === 413) {
+            errorMessage = "Файл слишком большой. Попробуйте уменьшить шаблон или выбрать меньше страниц.";
+          } else if (response.status === 504) {
+            errorMessage = "Таймаут сервера. Попробуйте выбрать меньше страниц.";
+          } else {
+            errorMessage = `Ошибка сервера (${response.status})`;
+          }
+        }
+        throw new Error(errorMessage);
       }
 
       const blob = await response.blob();
@@ -138,12 +162,20 @@ export const DashboardClient = () => {
   const handleDrop = (event: React.DragEvent<HTMLDivElement>) => {
     event.preventDefault();
     const file = event.dataTransfer.files?.[0];
-    if (file && file.name.endsWith(".pptx")) {
-      setTemplateFile(file);
-      setError(null);
-    } else {
+    if (!file) return;
+    
+    if (!file.name.endsWith(".pptx")) {
       setError("Пожалуйста, выберите файл .pptx");
+      return;
     }
+    
+    if (file.size > MAX_FILE_SIZE) {
+      setError(`Файл слишком большой (${(file.size / 1024 / 1024).toFixed(1)} MB). Максимум 4 MB.`);
+      return;
+    }
+    
+    setTemplateFile(file);
+    setError(null);
   };
 
   const handleDragOver = (event: React.DragEvent<HTMLDivElement>) => {
