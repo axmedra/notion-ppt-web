@@ -17,26 +17,26 @@ export const POST = async (request: Request) => {
   }
 
   try {
-    const body = await request.json();
-    const { templateUrl, pageIds } = body as { templateUrl: string; pageIds: string[] };
+    const formData = await request.formData();
+    const template = formData.get("template") as File | null;
+    const pageIdsJson = formData.get("pageIds") as string | null;
 
-    if (!templateUrl) {
-      return NextResponse.json({ error: "Template URL is required" }, { status: 400 });
+    if (!template) {
+      return NextResponse.json({ error: "Template file is required" }, { status: 400 });
     }
 
-    if (!pageIds || pageIds.length === 0) {
+    if (!pageIdsJson) {
+      return NextResponse.json({ error: "Page IDs are required" }, { status: 400 });
+    }
+
+    const pageIds: string[] = JSON.parse(pageIdsJson);
+
+    if (pageIds.length === 0) {
       return NextResponse.json({ error: "At least one page is required" }, { status: 400 });
     }
 
     const notion = createNotionClient(session.accessToken);
-    
-    // Скачиваем шаблон из Vercel Blob
-    console.log(`Скачивание шаблона: ${templateUrl.slice(0, 50)}...`);
-    const templateResponse = await fetch(templateUrl);
-    if (!templateResponse.ok) {
-      return NextResponse.json({ error: "Failed to download template" }, { status: 400 });
-    }
-    const templateBuffer = await templateResponse.arrayBuffer();
+    const templateBuffer = await template.arrayBuffer();
 
     console.log(`Обработка ${pageIds.length} страниц...`);
 

@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { upload } from "@vercel/blob/client";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -102,24 +101,13 @@ export const DashboardClient = () => {
     setError(null);
 
     try {
-      // 1. Загружаем шаблон напрямую в Vercel Blob (клиентская загрузка, обходит лимит 4.5MB)
-      console.log("Загрузка шаблона...");
-      const blob = await upload(templateFile.name, templateFile, {
-        access: "public",
-        handleUploadUrl: "/api/upload",
-      });
+      const formData = new FormData();
+      formData.append("template", templateFile);
+      formData.append("pageIds", JSON.stringify(Array.from(selectedPageIds)));
 
-      const templateUrl = blob.url;
-      console.log("Шаблон загружен:", templateUrl);
-
-      // 2. Генерируем презентацию
       const response = await fetch("/api/export", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          templateUrl,
-          pageIds: Array.from(selectedPageIds),
-        }),
+        body: formData,
       });
 
       if (!response.ok) {
