@@ -199,9 +199,22 @@ const processOneSlide = async (
   }
   
   // Обработка нескольких названий банков
+  // Если есть только 1 bankName, но несколько картинок — используем его для всех
   const bankNameShapes = [shapes.bankName1, shapes.bankName2, shapes.bankName3];
-  for (let i = 0; i < input.bankNames.length && i < 3; i++) {
-    const bankName = input.bankNames[i];
+  const imageCount = Math.min(input.images.length, 3);
+  const bankNamesExpanded = [...input.bankNames];
+  
+  // Расширяем массив bankNames до количества картинок, используя первый bankName
+  if (bankNamesExpanded.length > 0 && bankNamesExpanded.length < imageCount) {
+    const firstBankName = bankNamesExpanded[0];
+    while (bankNamesExpanded.length < imageCount) {
+      bankNamesExpanded.push(firstBankName);
+    }
+    console.log(`     BankNames расширены: [${bankNamesExpanded.join(', ')}]`);
+  }
+  
+  for (let i = 0; i < bankNamesExpanded.length && i < 3; i++) {
+    const bankName = bankNamesExpanded[i];
     const shapeName = bankNameShapes[i];
     if (shapeName && bankName?.trim()) {
       slideXml = replaceTextInShape(slideXml, shapeName, bankName.trim());
